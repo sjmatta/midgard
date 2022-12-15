@@ -1,0 +1,34 @@
+name: Deploy to AWS CloudFormation
+
+on:
+    push:
+        branches:
+            - main
+
+jobs:
+    deploy:
+        name: Deploy stack to AWS
+        runs-on: ubuntu-latest
+        outputs:
+            env-name: ${{ steps.env-name.outputs.environment }}
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v2
+
+            - name: Configure AWS credentials
+              id: creds
+              uses: aws-actions/configure-aws-credentials@v1
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: ${{ secrets.AWS_REGION }}
+
+            - name: Deploy Notebook Bucket
+              id: eks-cluster
+              uses: aws-actions/aws-cloudformation-github-deploy@master
+              with:
+                  name: midgard
+                  template: cfn.yaml
+                  no-fail-on-empty-changeset: "1"
+                  parameter-overrides: >-
+                      BucketName=${{ secrets.BUCKET_NAME }}
